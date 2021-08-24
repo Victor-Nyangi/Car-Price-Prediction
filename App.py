@@ -361,13 +361,14 @@ X_polytest = poly_features.fit_transform(X_test2)
 pol_reg = LinearRegression()
 pol_reg.fit(X_poly, y_train2)
 y_predict3 = pol_reg.predict(X_polytest)
-st.write("Mean Absolute Error: {:.3f}%".format(100*mean_absolute_error(y_test2,y_predict3)))
-st.write("Mean Square Error: {:.3f}%".format(100*mean_squared_error(y_test2,y_predict3)))
-st.write("RMSE: {:.3f}%".format(100*np.sqrt(mean_squared_error(y_test2,y_predict3))))
+mae3 = ("{:.3f}%".format(100*mean_absolute_error(y_test2,y_predict3)))
+mse3 = ("{:.3f}%".format(100*mean_squared_error(y_test2,y_predict3)))
+rmse3 = ("{:.3f}%".format(100*np.sqrt(mean_squared_error(y_test2,y_predict3))))
 st.write(f'The bias {pol_reg.intercept_}')
-st.write("R2_score: {:.3f}%".format(100*r2_score(y_test2,y_predict3)))
-mse3=mean_squared_error(y_predict3,y_test2)
-mae3=mean_absolute_error(y_predict3,y_test2)
+r2_score3 = ("{:.3f}%".format(100*r2_score(y_test2,y_predict3)))
+
+accuracy3 = 100 - np.mean(100*(errors/y_test2))
+acc3 = (round(accuracy3, 2), '%.')
 
 
 st.write('Ridge regression')
@@ -436,14 +437,15 @@ st.write(' Elastic net Middle ground between Ridge Regression and Lasso Regressi
 elastic_net = ElasticNet(alpha=0.1, l1_ratio=0.5)
 elastic_net.fit(X_train2, y_train2)
 y_predict5 = elastic_net.predict(X_test2)
-st.write("Mean Absolute Eror: {:.3f}%".format(100*mean_absolute_error(y_predict5,y_test2)))
-st.write("Mean Squared Error: {:.3f}%".format(100*mean_squared_error(y_predict5,y_test2)))
-st.write("RMSE: {:.3f}%".format(100*np.sqrt(mean_squared_error(y_predict5,y_test2))))
+mae6 = ("{:.3f}%".format(100*mean_absolute_error(y_predict5,y_test2)))
+mse6 = ("{:.3f}%".format(100*mean_squared_error(y_predict5,y_test2)))
+rmse6 = ("{:.3f}%".format(100*np.sqrt(mean_squared_error(y_predict5,y_test2))))
 st.write(f'The bias {elastic_net.intercept_}')
-st.write("R2_score: {:.3f}%".format(100*r2_score(y_test2,y_predict5)))
-mse6=mean_squared_error(y_predict5,y_test2)
-mae6=mean_absolute_error(y_predict5,y_test2)
+r2_score6 = ("{:.3f}%".format(100*r2_score(y_test2,y_predict5)))
 
+errors6 = abs(y_predict - y_predict5)
+accuracy6 = 100 - np.mean(100*(errors6/y_predict5))
+acc6 = (round(accuracy6, 2), '%.')
 
 decisionregressor=DecisionTreeRegressor()
 decisionregressor.fit(X_train2,y_train2)
@@ -506,13 +508,17 @@ with row7_2, _lock:
     sgd_reg = SGDRegressor(max_iter=50, penalty=None, eta0=0.1, tol=1e-3)
     sgd_reg.fit(X_train, y_train)#.ravel() returns a flatenned array
     y_predict_sdg=sgd_reg.predict(X_test)
-    mse2=mean_squared_error(y_predict_sdg,y_test)
-    mae2=mean_absolute_error(y_predict_sdg,y_test)
-    st.write("Mean Absolute Eror: {:.3f}%".format(100*mean_absolute_error(y_predict_sdg,y_test)))
-    st.write("Mean Squared Error: {:.3f}%".format(100*mean_squared_error(y_predict_sdg,y_test)))
-    st.write("RMSE: {:.3f}%".format(100*np.sqrt(mean_squared_error(y_predict_sdg,y_test))))
+    
+    mae2 = ("{:.3f}%".format(100*mean_absolute_error(y_predict_sdg,y_test)))
+    mse2 = ("{:.3f}%".format(100*mean_squared_error(y_predict_sdg,y_test)))
+    rmse2 = ("{:.3f}%".format(100*np.sqrt(mean_squared_error(y_predict_sdg,y_test))))
     st.write(f'The bias {sgd_reg.intercept_}')
-    st.write("R2_score: {:.3f}%".format(100*r2_score(y_test,y_predict_sdg)))
+    r2_score2 = ("{:.3f}%".format(100*r2_score(y_test,y_predict_sdg)))
+    
+    errors2 = abs(y_predict - y_predict_sdg)
+    accuracy2 = 100 - np.mean(100*(errors2/y_predict_sdg))
+    acc2 = (round(accuracy2, 2), '%.')
+
     f=plt.figure()
     plt.scatter(y_test,y_predict_sdg, color="purple")
     st.pyplot(f)
@@ -523,13 +529,16 @@ with row8_1, _lock:
     model_linear2 = LinearRegression(normalize=True)
     model_linear2.fit(X_train2, y_train2)
     y_pred2 = model_linear2.predict(X_test2)
-    mse=mean_squared_error(y_pred2,y_test2)
-    mae=mean_absolute_error(y_pred2,y_test2)
-    st.write("Mean Absolute Error: {:.3f}%".format(100*mean_absolute_error(y_test2,y_pred2)))
-    st.write("Mean Square Error: {:.3f}%".format(100*mean_squared_error(y_test2,y_pred2)))
-    st.write("RMSE: {:.3f}%".format(100*np.sqrt(mean_squared_error(y_test2,y_pred2))))
+    mae = ("Mean Absolute Error: {:.3f}%".format(100*mean_absolute_error(y_test2,y_pred2)))
+    mse = ("{:.3f}%".format(100*mean_squared_error(y_test2,y_pred2)))
+    rmse = ("{:.3f}%".format(100*np.sqrt(mean_squared_error(y_test2,y_pred2))))
     st.write(f'The bias {model_linear2.intercept_}')
-    st.write("R2_score: {:.3f}%".format(100*r2_score(y_test,y_pred2)))
+    r2_score = ("{:.3f}%".format(100*r2_score(y_test,y_pred2)))
+    
+    errors = abs(y_pred2 - y_test2)
+    accuracy = 100 - np.mean(100*(errors/y_pred2))
+    acc = (round(accuracy, 2), '%.')
+
     f=plt.figure()
     plt.scatter(y_test2,y_pred2, color="cyan")
     st.pyplot(f)
@@ -545,6 +554,8 @@ with row8_2, _lock:
     st.write("RMSE: {:.3f}%".format(100*np.sqrt(mean_squared_error(y_predict2_sdg,y_pred2))))
     st.write(f'The bias {sgd_reg2.intercept_}')
     st.write("R2_score: {:.3f}%".format(100*r2_score(y_test2,y_predict2_sdg)))
+    
+
     f=plt.figure()
     plt.scatter(y_test2,y_predict2_sdg, color="purple")
     st.pyplot(f)
@@ -552,6 +563,11 @@ with row8_2, _lock:
 
 data1 = [mae, mae2, mae3, mae4, mae5, mae6, mae7]
 data2 = [mse, mse2, mse3, mse4, mse5, mse6, mse7]
+data3 = [rmse, rmse2, rmse3, rmse4, rmse5, rmse6, rmse7]
+data4 = [r2_score,r2_score1, r2_score2, r2_score3,r2_score4, r2_score5, r2_score6,r2_score7]
+data5 = [acc acc1, acc2, acc3, acc4, acc5,acc6, acc7]
+
+
 index = ['linear_regression','SDG_regression','Polynomial_Regression','Ridge_regression','Lasso_regression','ElasticNet_regression', 'SDG_regression2']
 errord = pd.DataFrame({'absol_error':data1, 'sqrd_error':data2},index = index)
 errord.sort_values(by=['absol_error','sqrd_error'])

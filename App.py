@@ -212,7 +212,7 @@ list2 = indice2.tolist()
 mile_age = df['Mileage'][df['Mileage']>max_mile][df['Age']>max_age]
 indice3 = mile_age.index
 list3 = indice3.tolist()
-lists =list1 +list2 +list3
+lists =list1 + list2 + list3
 
 df.reset_index(drop=True,inplace=True)
 
@@ -353,8 +353,31 @@ st.write(tuple([i for i in (ols_results2.params - res.params)/res.params*100]))
 # st.write("Percentage change is %f" % tuple([i for i in (ols_results2.params - res.params)/res.params*100]))
 
 #Calculating the Weights of the features
-# model_linear2.coef_
-st.write('Polynomial regression')
+
+model_linear = LinearRegression(normalize=True)
+model_linear.fit(X_train, y_train)
+y_pred = model_linear.predict(X_test)
+mae = ("{:.3f}%".format(100*mean_absolute_error(y_test2,y_pred)))
+mse = ("{:.3f}%".format(100*mean_squared_error(y_test2,y_pred)))
+rmse = ("{:.3f}%".format(100*np.sqrt(mean_squared_error(y_test2,y_pred))))
+st.write(f'The bias {model_linear.intercept_}')
+r2_score("{:.3f}%".format(100*r2_score(y_test,y_pred)))
+errors = abs(y_pred - y_test2)
+accuracy = 100 - np.mean(100*(errors/y_test2))
+acc = (round(accuracy, 2), '%.')
+
+sgd_reg = SGDRegressor(max_iter=50, penalty=None, eta0=0.1, tol=1e-3)
+sgd_reg.fit(X_train, y_train)#.ravel() returns a flatenned array
+y_predict_sdg=sgd_reg.predict(X_test)
+mae2 = ("{:.3f}%".format(100*mean_absolute_error(y_predict_sdg,y_test)))
+mse2 = ("{:.3f}%".format(100*mean_squared_error(y_predict_sdg,y_test)))
+rmse2 = ("{:.3f}%".format(100*np.sqrt(mean_squared_error(y_predict_sdg,y_test))))
+st.write(f'The bias {sgd_reg.intercept_}')
+r2_score2 = ("{:.3f}%".format(100*r2_score(y_test,y_predict_sdg)))
+errors2 = abs(y_predict_sdg - y_test2)
+accuracy2 = 100 - np.mean(100*(errors2/y_test2))
+acc2 = (round(accuracy2, 2), '%.')
+    
 poly_features = PolynomialFeatures(degree=2, include_bias = False)#generate a polynomial matrix containing all the polnomial features of the specified degree
 X_poly = poly_features.fit_transform(X_train2)#fits then transforms the training set X into a polynomial set
 X_polytest = poly_features.fit_transform(X_test2)
@@ -366,74 +389,39 @@ mse3 = ("{:.3f}%".format(100*mean_squared_error(y_test2,y_predict3)))
 rmse3 = ("{:.3f}%".format(100*np.sqrt(mean_squared_error(y_test2,y_predict3))))
 st.write(f'The bias {pol_reg.intercept_}')
 r2_score3 = ("{:.3f}%".format(100*r2_score(y_test2,y_predict3)))
-
+errors3 = abs(y_predict3 - y_test2)
 accuracy3 = 100 - np.mean(100*(errors/y_test2))
 acc3 = (round(accuracy3, 2), '%.')
 
-
-st.write('Ridge regression')
-st.write('A regularation term is added to the cost function that regularizes the model')
-ridge_reg = Ridge(alpha=1, solver="cholesky")
-ridge_reg.fit(X_train, y_train)
-y_predridge=ridge_reg.predict(X_test)
-st.write("Mean Absolute Error: {:.3f}%".format(100*mean_absolute_error(y_test,y_predridge)))
-st.write("Mean Square Error: {:.3f}%".format(100*mean_squared_error(y_test,y_predridge)))
-st.write("RMSE: {:.3f}%".format(100*np.sqrt(mean_squared_error(y_test,y_predridge))))
+ridge_reg = Ridge(alpha=1, solver="cholesky", penalty="l2")
+ridge_reg.fit(X_train2, y_train2)
+y_predridge=ridge_reg.predict(X_test2)
+mae4 = ("Mean Absolute Error: {:.3f}%".format(100*mean_absolute_error(y_test2,y_predridge)))
+mse4 = ("Mean Square Error: {:.3f}%".format(100*mean_squared_error(y_test2,y_predridge)))
+rmse4 = ("RMSE: {:.3f}%".format(100*np.sqrt(mean_squared_error(y_test2,y_predridge))))
 st.write(f'The bias {ridge_reg.intercept_}')
-st.write("R2_score: {:.3f}%".format(100*r2_score(y_test,y_predridge)))
-mse4=mean_squared_error(y_predridge,y_test)
-mae4=mean_squared_error(y_predridge,y_test)
-st.write('SGD regressor')
-sgd_reg2 = SGDRegressor(penalty="l2", max_iter=1000, tol=1e-3)#penalty l2 indicates that you want
-sgd_reg2.fit(X_train, y_train)#.ravel() returns a flatenned array
-y_predict_sdg2=sgd_reg2.predict(X_test)
-st.write("Mean Absolute Eror: {:.3f}%".format(100*mean_absolute_error(y_predict_sdg2,y_test)))
-st.write("Mean Squared Error: {:.3f}%".format(100*mean_squared_error(y_predict_sdg2,y_test)))
-st.write("RMSE: {:.3f}%".format(100*np.sqrt(mean_squared_error(y_predict_sdg2,y_test))))
-st.write(f'The bias {sgd_reg2.intercept_}')
-st.write("R2_score: {:.3f}%".format(100*r2_score(y_test2,y_predict_sdg2)))
-mse7=mean_squared_error(y_predict_sdg2,y_test2)
-mae7=mean_absolute_error(y_predict3,y_test2)
-
-
-# st.write("The Gaussian model has an Accuracy score: {:.2f}%".format(100*(accuracy_score(y_test, y_predict_sdg2))))
-#l2 is ridge regression
-#l1 is lasso regression
-#Difference is that ridge adds squared magnitude of coefficient as penalty term to the loss function
-#Lasso(least absolute shrinkage and Selection Operator) adds "absolute value of magnitude" of coeffiecient as penalty term to the loss function
-#Lasso shrinks the less important feature's coefficient to zero thus, removing some feature altogether, works well with feature selection
-#SGD to add a regularization term to the cost function equal to half the square of the l2 norm of the weight vector
-
-
-
-# df1 = pd.DataFrame({'Actual': y_test.flatten(), 'Predicted': y_pred.flatten()})
-# df1.plot(kind='bar')
-# plt.grid(which='major', linestyle='-', linewidth='0.5', color='green')
-# plt.grid(which='minor', linestyle=':', linewidth='0.5', color='black')
-# plt.show()
-
-# r_sq = model.score(x, y)
-# print('coefficient of determination:', r_sq)
-
-# pd.DataFrame(zip(X.columns, lm.coef_), columns= ['features', 'estaimatedCoefficients'])
-
+r2_score4 = ("R2_score: {:.3f}%".format(100*r2_score(y_test2,y_predridge)))
+mse4=mean_squared_error(y_predridge,y_test2)
+mae4=mean_squared_error(y_predridge,y_test2)
+errors4 = abs(y_predict4 - y_test2)
+accuracy4 = 100 - np.mean(100*(errors/y_test2))
+acc4 = (round(accuracy4, 2), '%.')
 
 colz = ['Mileage', 'EngineV']
-
 
 lasso_reg = Lasso(alpha = 0.1)
 lasso_reg.fit(X_train2, y_train2)
 y_predlasso = lasso_reg.predict(X_test2)
-st.write("Mean Absolute Eror: {:.3f}%".format(100*mean_absolute_error(y_predlasso,y_test2)))
-st.write("Mean Squared Error: {:.3f}%".format(100*mean_squared_error(y_predlasso,y_test2)))
-st.write("RMSE: {:.3f}%".format(100*np.sqrt(mean_squared_error(y_predlasso,y_test2))))
+mae5 = ("Mean Absolute Eror: {:.3f}%".format(100*mean_absolute_error(y_predlasso,y_test2)))
+mse5 = ("Mean Squared Error: {:.3f}%".format(100*mean_squared_error(y_predlasso,y_test2)))
+rmse5 = ("RMSE: {:.3f}%".format(100*np.sqrt(mean_squared_error(y_predlasso,y_test2))))
 st.write(f'The bias {lasso_reg.intercept_}')
-st.write("R2_score: {:.3f}%".format(100*r2_score(y_test2,y_predlasso)))
-mse5=mean_squared_error(y_predlasso,y_test2)
-mae5=mean_absolute_error(y_predlasso,y_test2)
+r2_score5 = ("R2_score: {:.3f}%".format(100*r2_score(y_test2,y_predlasso)))
+errors5 = abs(y_predlasso - y_test2)
+accuracy5 = 100 - np.mean(100*(errors5/y_test2))
+acc5 = (round(accuracy5, 2), '%.')
 
 
-st.write(' Elastic net Middle ground between Ridge Regression and Lasso Regression')
 elastic_net = ElasticNet(alpha=0.1, l1_ratio=0.5)
 elastic_net.fit(X_train2, y_train2)
 y_predict5 = elastic_net.predict(X_test2)
@@ -442,33 +430,38 @@ mse6 = ("{:.3f}%".format(100*mean_squared_error(y_predict5,y_test2)))
 rmse6 = ("{:.3f}%".format(100*np.sqrt(mean_squared_error(y_predict5,y_test2))))
 st.write(f'The bias {elastic_net.intercept_}')
 r2_score6 = ("{:.3f}%".format(100*r2_score(y_test2,y_predict5)))
-
-errors6 = abs(y_predict - y_predict5)
-accuracy6 = 100 - np.mean(100*(errors6/y_predict5))
+errors6 = abs(y_predict5 - y_test2)
+accuracy6 = 100 - np.mean(100*(errors6/y_test2))
 acc6 = (round(accuracy6, 2), '%.')
+
 
 decisionregressor=DecisionTreeRegressor()
 decisionregressor.fit(X_train2,y_train2)
 st.write('Decision Tree')
 y_pred_dec=decisionregressor.predict(X_test2)
 score=r2_score(y_test2,y_pred_dec)
-st.write("Mean Absolute Eror: {:.3f}%".format(100*mean_absolute_error(y_pred_dec,y_test2)))
-st.write("Mean Squared Error: {:.3f}%".format(100*mean_squared_error(y_pred_dec,y_test2)))
-st.write("RMSE: {:.3f}%".format(100*np.sqrt(mean_squared_error(y_pred_dec,y_test2))))
-st.write(f'The bias {elastic_net.intercept_}')
-st.write("R2_score: {:.3f}%".format(100*r2_score(y_test2,y_pred_dec)))
+mae7 =("{:.3f}%".format(100*mean_absolute_error(y_pred_dec,y_test2)))
+mse7 = ("{:.3f}%".format(100*mean_squared_error(y_pred_dec,y_test2)))
+rmse7 = ("{:.3f}%".format(100*np.sqrt(mean_squared_error(y_pred_dec,y_test2))))
+# st.write(f'The bias {elastic_net.intercept_}')
+r2_score7 = ("{:.3f}%".format(100*r2_score(y_test2,y_pred_dec)))
+errors7 = abs(y_pred_dec - y_test2)
+accuracy7 = 100 - np.mean(100*(errors7/y_test2))
+acc7 = (round(accuracy7, 2), '%.')
 
 #Instantiating with 1000 decision trees
 st.write('Random Forest')
 rf = RandomForestRegressor(n_estimators=1000, random_state = 42)
 rf.fit(X_train2, y_train2)
 predictions = rf.predict(X_test2)
-st.write("Mean Absolute Eror: {:.3f}%".format(100*mean_absolute_error(y_pred_dec,y_test2)))
-st.write("Mean Squared Error: {:.3f}%".format(100*mean_squared_error(y_pred_dec,y_test2)))
-st.write("RMSE: {:.3f}%".format(100*np.sqrt(mean_squared_error(y_pred_dec,y_test2))))
-st.write(f'The bias {elastic_net.intercept_}')
-st.write("R2_score: {:.3f}%".format(100*r2_score(y_test2,y_pred_dec)))
-
+mae8 = ("{:.3f}%".format(100*mean_absolute_error(predictions,y_test2)))
+mse8 = ("{:.3f}%".format(100*mean_squared_error(predictions,y_test2)))
+rmse8 = ("{:.3f}%".format(100*np.sqrt(mean_squared_error(predictions,y_test2))))
+# st.write(f'The bias {elastic_net.intercept_}')
+r2_score8 = ("{:.3f}%".format(100*r2_score(y_test2,predictions)))
+errors8 = abs(predictions - y_test2)
+accuracy8 = 100 - np.mean(100*(errors8/y_test2))
+acc8 = (round(accuracy8, 2), '%.')
 
 errors = abs(predictions - y_test2)
 st.write('Mean Absolute Error:', round(np.mean(errors), 2), 'degrees.')
@@ -484,93 +477,16 @@ feature_importances = sorted(feature_importances, key = lambda x: x[1], reverse 
 #Print out the feature and importances
 [st.write('Variable: {:20} Importance:{}'.format(*pair)) for pair in feature_importances]
 
-st.write('## The models')
-row7_1, row7_2 = st.beta_columns((1, 1))
-with row7_1, _lock:
-    st.write('**Using Mileage and Engine Volume features with a linear regression model**')
-    model_linear = LinearRegression(normalize=True)
-    model_linear.fit(X_train, y_train)
-    y_pred = model_linear.predict(X_test)
-    mse=mean_squared_error(y_pred,y_test2)
-    mae=mean_absolute_error(y_pred,y_test2)
-    #model validation
-    st.write("Mean Absolute Error: {:.3f}%".format(100*mean_absolute_error(y_test2,y_pred)))
-    st.write("Mean Square Error: {:.3f}%".format(100*mean_squared_error(y_test2,y_pred)))
-    st.write("RMSE: {:.3f}%".format(100*np.sqrt(mean_squared_error(y_test2,y_pred))))
-    st.write(f'The bias {model_linear.intercept_}')
-    st.write("R2_score: {:.3f}%".format(100*r2_score(y_test,y_pred)))
-    f=plt.figure()
-    plt.scatter(y_test,y_pred, color="cyan")
-    st.pyplot(f)
-
-with row7_2, _lock:
-    st.write('**Using Mileage and Engine Volume features with a SGDRegressor regression model**')
-    sgd_reg = SGDRegressor(max_iter=50, penalty=None, eta0=0.1, tol=1e-3)
-    sgd_reg.fit(X_train, y_train)#.ravel() returns a flatenned array
-    y_predict_sdg=sgd_reg.predict(X_test)
-    
-    mae2 = ("{:.3f}%".format(100*mean_absolute_error(y_predict_sdg,y_test)))
-    mse2 = ("{:.3f}%".format(100*mean_squared_error(y_predict_sdg,y_test)))
-    rmse2 = ("{:.3f}%".format(100*np.sqrt(mean_squared_error(y_predict_sdg,y_test))))
-    st.write(f'The bias {sgd_reg.intercept_}')
-    r2_score2 = ("{:.3f}%".format(100*r2_score(y_test,y_predict_sdg)))
-    
-    errors2 = abs(y_predict - y_predict_sdg)
-    accuracy2 = 100 - np.mean(100*(errors2/y_predict_sdg))
-    acc2 = (round(accuracy2, 2), '%.')
-
-    f=plt.figure()
-    plt.scatter(y_test,y_predict_sdg, color="purple")
-    st.pyplot(f)
-
-row8_1, row8_2 = st.beta_columns((1, 1))
-with row8_1, _lock:
-    st.write('**Using Mileage, Engine, Volume and the other categorical features with a linear regression model**')
-    model_linear2 = LinearRegression(normalize=True)
-    model_linear2.fit(X_train2, y_train2)
-    y_pred2 = model_linear2.predict(X_test2)
-    mae = ("Mean Absolute Error: {:.3f}%".format(100*mean_absolute_error(y_test2,y_pred2)))
-    mse = ("{:.3f}%".format(100*mean_squared_error(y_test2,y_pred2)))
-    rmse = ("{:.3f}%".format(100*np.sqrt(mean_squared_error(y_test2,y_pred2))))
-    st.write(f'The bias {model_linear2.intercept_}')
-    r2_score = ("{:.3f}%".format(100*r2_score(y_test,y_pred2)))
-    
-    errors = abs(y_pred2 - y_test2)
-    accuracy = 100 - np.mean(100*(errors/y_pred2))
-    acc = (round(accuracy, 2), '%.')
-
-    f=plt.figure()
-    plt.scatter(y_test2,y_pred2, color="cyan")
-    st.pyplot(f)
-
-with row8_2, _lock:
-    st.write('**Using Mileage, Engine Volume and the other categorical features with a SGDRegressor regression model**')
-    sgd_reg2 = SGDRegressor(max_iter=50, penalty=None, eta0=0.1, tol=1e-3)
-    sgd_reg2.fit(X_train2, y_train2.ravel())#.ravel() returns a flatenned array
-    y_predict2_sdg=sgd_reg2.predict(X_test2)
-
-    st.write("Mean Absolute Eror: {:.3f}%".format(100*mean_absolute_error(y_predict2_sdg,y_test2)))
-    st.write("Mean Squared Error: {:.3f}%".format(100*mean_squared_error(y_predict2_sdg,y_test2)))
-    st.write("RMSE: {:.3f}%".format(100*np.sqrt(mean_squared_error(y_predict2_sdg,y_pred2))))
-    st.write(f'The bias {sgd_reg2.intercept_}')
-    st.write("R2_score: {:.3f}%".format(100*r2_score(y_test2,y_predict2_sdg)))
-    
-
-    f=plt.figure()
-    plt.scatter(y_test2,y_predict2_sdg, color="purple")
-    st.pyplot(f)
+data1 = [mae, mae2, mae3, mae4, mae5, mae6, mae7, mae8]
+data2 = [mse, mse2, mse3, mse4, mse5, mse6, mse7, mae8]
+data3 = [rmse, rmse2, rmse3, rmse4, rmse5, rmse6, rmse7, rmse8]
+data4 = [r2_score,r2_score1, r2_score2, r2_score3,r2_score4, r2_score5, r2_score6,r2_score7, r2_score8]
+data5 = [acc, acc2, acc3, acc4, acc5,acc6, acc7, acc8]
 
 
-data1 = [mae, mae2, mae3, mae4, mae5, mae6, mae7]
-data2 = [mse, mse2, mse3, mse4, mse5, mse6, mse7]
-data3 = [rmse, rmse2, rmse3, rmse4, rmse5, rmse6, rmse7]
-data4 = [r2_score,r2_score1, r2_score2, r2_score3,r2_score4, r2_score5, r2_score6,r2_score7]
-data5 = [acc acc1, acc2, acc3, acc4, acc5,acc6, acc7]
-
-
-index = ['linear_regression','SDG_regression','Polynomial_Regression','Ridge_regression','Lasso_regression','ElasticNet_regression', 'SDG_regression2']
-errord = pd.DataFrame({'absol_error':data1, 'sqrd_error':data2},index = index)
-errord.sort_values(by=['absol_error','sqrd_error'])
+index = ['linear_regression','SDG_regression','Polynomial_Regression','Ridge_regression','Lasso_regression','ElasticNet_regression', 'Decision Tree', 'Random Forest]
+errord = pd.DataFrame({'absol_error':data1, 'sqrd_error':data2, 'root_mean_sq_error':data3, 'r2_score':data4, 'accuracy':data5},index = index)
+errord.sort_values(by=['accuracy'])
 st.write(errord)
 
 

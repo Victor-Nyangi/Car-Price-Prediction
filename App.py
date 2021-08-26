@@ -13,7 +13,6 @@ from sklearn.linear_model import Lasso
 from sklearn.linear_model import ElasticNet
 from sklearn.ensemble import RandomForestRegressor
 
-from sklearn.linear_model import SGDRegressor
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.linear_model import Ridge
 from sklearn.tree import DecisionTreeRegressor
@@ -259,15 +258,16 @@ with row6_2, _lock:
     sns.distplot(df['log_price'])
     st.pyplot(fig)
 
-st.write('Defining the features I want to check for multicorrelation')
-variables = df[['Mileage','Age','EngineV']]
-vif = pd.DataFrame()
-vif['VIF'] = [variance_inflation_factor(variables.values, i) for i in range(variables.shape[1])]
-vif['features'] = variables.columns
-st.write(vif.round(1))
-st.write('''
-VIF Values between 1 and 5 are considered acceptable
-''')
+# st.write('Defining the features I want to check for multicorrelation')
+# variables = df[['Mileage','Age','EngineV']]
+# vif = pd.DataFrame()
+# vif['VIF'] = [variance_inflation_factor(variables.values, i) for i in range(variables.shape[1])]
+# vif['features'] = variables.columns
+# st.write(vif.round(1))
+# st.write('''
+# VIF Values between 1 and 5 are considered acceptable
+# ''')
+
 
 # Spotting all categorical variables and creating dummies
 # If we have N categorical variables, we have to create N-1 dummies so if all other dummies are zero, then we shall conclude that it is the category that isn't a dummy
@@ -288,22 +288,11 @@ df_final = df_final[cols]
 
 df_final.drop(['Price','Registration_yes'],axis=1,inplace=True)
 
-# df_final2=df_final.copy() 
-
-#scale the data using StandardScaler
-#create an instance of the StandardScaler class
-#fit the inputs to the scaler instance
-# We can scale the dummies as it has no impact on their predicitve power
-
-# scaler = StandardScaler()
-# scaler.fit(df_final2)
-# df_scaled = scaler.transform(df_final2)
-
 st.write('''
 I transformed the data using StandardScaler by creating an instance of the StandardScaler class and fitting the inputs to the scaler instance
 ''')
 
-X = df_final.iloc[:,[1,2]].values
+X = df_final.iloc[:,1:].values
 targets = df_final.iloc[:,0].values
 scaler = StandardScaler()
 scaler.fit(X)
@@ -321,62 +310,52 @@ X_train2, X_test2, y_train2,y_test2 = train_test_split(features2,targets,test_si
 # X is Mileage and EngineV categorical features
 # X2 is the rest of the categorical features
 
-st.write('''Using Stochastic Gradient Descent
-- sgd_reg = SGDRegressor(penalty="l2", max_iter=1000, tol=1e-3)#penalty l2 indicates that you want
-- l2 is ridge regression
-- l1 is lasso regression
-- Difference is that ridge adds squared magnitude of coefficient as penalty term to the loss function
-- Lasso(least absolute shrinkage and Selection Operator) adds "absolute value of magnitude" of coeffiecient as penalty term to the loss function
-- Lasso shrinks the less important feature's coefficient to zero thus, removing some feature altogether, works well with feature selection
-- SGD to add a regularization term to the cost function equal to half the square of the l2 norm of the weight vector
-''')
+rf = RandomForestRegressor(n_estimators=1000, random_state = 42)
+rf.fit(X_train, y_train)
+st.write(X_train)
+predictions = rf.predict(X_test)
+errors8 = abs(predictions - y_test)
+acc8 = ("{:.3f}%".format(100 - np.mean(100*(errors8/y_test))))
 
-st.write('''
-Stochastic Gradient Descent Regressor
+errors = abs(predictions - y_test)
+accuracy = 100 - np.mean(100*(errors/y_test))
+importances = list(rf.feature_importances_)
+cols2 = ['Mileage', 'EngineV', 'Brand_BMW',
+       'Brand_Mercedes-Benz', 'Brand_Mitsubishi', 'Brand_Renault',
+       'Brand_Toyota', 'Brand_Volkswagen', 'Body_hatch', 'Body_other',
+       'Body_sedan', 'Body_vagon', 'Body_van', 'Engine Type_Gas',
+       'Engine Type_Other', 'Engine Type_Petrol']
+feature_list = cols2
+#List of tuples with variable and importance
+feature_importances = [(feature, round(importance, 2)) for feature, importance in zip(feature_list, importances)]
+#Sorting the feature importances by most important first
+feature_importances = sorted(feature_importances, key = lambda x: x[1], reverse = True)
+#Print out the feature and importances
+st.write('')
+st.write('Variable importances')
 
-- The gradient of the loss is estimated each sample at a time and the model is updated along the way with a decreasing strength schedule(learning rate)
 
-- The regularizer is a penalty added to the loss function that shrinks model parameters towards the zero vector using either the squared euclidean norm L2 or the absolute norm L1 or a combination of both (Elastic Net)
+row7_1, row7_2 = st.beta_columns((1, 1))
+with row7_1, _lock:
+    for pair in feature_importances:
+        st.write('Variable: {:20} Importance:{}'.format(*pair))
+with row7_2, _lock:
+    st.write('I chose to retain mileage and EngineV since they are they are the only 2 variables that have significnt importance in the prediction of Car Price')
 
-- tol : float or None, optional (default=1e-3) The stopping criterion. If it is not None, the iterations will stop when (loss > best_loss - tol) for n_iter_no_change consecutive epochs.
+# bs = [st.write('Variable: {:20} Importance:{}'.format(*pair)) ]
+# st.write(bs)
 
-- max_iter...The maximum number of passes over the training data (aka epochs).
-
-- eta0... The initial learning rate for the 'constant'
-''')
-
-res=sm.OLS(targets,features2).fit()
-st.write(res.summary())
-st.write('Checking the effect of dropping a single observation')
-ols_results2 = sm.OLS(targets[:14], features2[:14]).fit()
-st.write(tuple([i for i in (ols_results2.params - res.params)/res.params*100]))
-# st.write("Percentage change is %f" % tuple([i for i in (ols_results2.params - res.params)/res.params*100]))
-
-#Calculating the Weights of the features
-
+st.write('A comparison of various Machine Learning Regression Algorithms')
 model_linear = LinearRegression(normalize=True)
-model_linear.fit(X_train, y_train)
-y_pred = model_linear.predict(X_test)
-mae = ("{:.3f}%".format(100*mean_absolute_error(y_test2,y_pred)))
+model_linear.fit(X_train2, y_train2)
+y_pred = model_linear.predict(X_test2)
+mae = ("{:.3f}%".format(100*mean_absolute_error(y_pred,y_test2)))
 mse = ("{:.3f}%".format(100*mean_squared_error(y_test2,y_pred)))
 rmse = ("{:.3f}%".format(100*np.sqrt(mean_squared_error(y_test2,y_pred))))
-st.write(f'The bias {model_linear.intercept_}')
-r2_score("{:.3f}%".format(100*r2_score(y_test,y_pred)))
+r2_score1 = ("{:.3f}%".format(100*r2_score(y_test2,y_pred)))
 errors = abs(y_pred - y_test2)
-accuracy = 100 - np.mean(100*(errors/y_test2))
-acc = (round(accuracy, 2), '%.')
+acc = ("{:.3f}%".format(100 - np.mean(100*(errors/y_test2))))
 
-sgd_reg = SGDRegressor(max_iter=50, penalty=None, eta0=0.1, tol=1e-3)
-sgd_reg.fit(X_train, y_train)#.ravel() returns a flatenned array
-y_predict_sdg=sgd_reg.predict(X_test)
-mae2 = ("{:.3f}%".format(100*mean_absolute_error(y_predict_sdg,y_test)))
-mse2 = ("{:.3f}%".format(100*mean_squared_error(y_predict_sdg,y_test)))
-rmse2 = ("{:.3f}%".format(100*np.sqrt(mean_squared_error(y_predict_sdg,y_test))))
-st.write(f'The bias {sgd_reg.intercept_}')
-r2_score2 = ("{:.3f}%".format(100*r2_score(y_test,y_predict_sdg)))
-errors2 = abs(y_predict_sdg - y_test2)
-accuracy2 = 100 - np.mean(100*(errors2/y_test2))
-acc2 = (round(accuracy2, 2), '%.')
     
 poly_features = PolynomialFeatures(degree=2, include_bias = False)#generate a polynomial matrix containing all the polnomial features of the specified degree
 X_poly = poly_features.fit_transform(X_train2)#fits then transforms the training set X into a polynomial set
@@ -387,39 +366,33 @@ y_predict3 = pol_reg.predict(X_polytest)
 mae3 = ("{:.3f}%".format(100*mean_absolute_error(y_test2,y_predict3)))
 mse3 = ("{:.3f}%".format(100*mean_squared_error(y_test2,y_predict3)))
 rmse3 = ("{:.3f}%".format(100*np.sqrt(mean_squared_error(y_test2,y_predict3))))
-st.write(f'The bias {pol_reg.intercept_}')
 r2_score3 = ("{:.3f}%".format(100*r2_score(y_test2,y_predict3)))
 errors3 = abs(y_predict3 - y_test2)
-accuracy3 = 100 - np.mean(100*(errors/y_test2))
-acc3 = (round(accuracy3, 2), '%.')
+acc3 = ("{:.3f}%".format(100 - np.mean(100*(errors3/y_test2))))
 
-ridge_reg = Ridge(alpha=1, solver="cholesky", penalty="l2")
+
+ridge_reg = Ridge(alpha=1, solver="cholesky")
 ridge_reg.fit(X_train2, y_train2)
 y_predridge=ridge_reg.predict(X_test2)
-mae4 = ("Mean Absolute Error: {:.3f}%".format(100*mean_absolute_error(y_test2,y_predridge)))
-mse4 = ("Mean Square Error: {:.3f}%".format(100*mean_squared_error(y_test2,y_predridge)))
-rmse4 = ("RMSE: {:.3f}%".format(100*np.sqrt(mean_squared_error(y_test2,y_predridge))))
-st.write(f'The bias {ridge_reg.intercept_}')
-r2_score4 = ("R2_score: {:.3f}%".format(100*r2_score(y_test2,y_predridge)))
-mse4=mean_squared_error(y_predridge,y_test2)
-mae4=mean_squared_error(y_predridge,y_test2)
-errors4 = abs(y_predict4 - y_test2)
-accuracy4 = 100 - np.mean(100*(errors/y_test2))
-acc4 = (round(accuracy4, 2), '%.')
+mae4 = ("{:.3f}%".format(100*mean_absolute_error(y_test2,y_predridge)))
+mse4 = ("{:.3f}%".format(100*mean_squared_error(y_test2,y_predridge)))
+rmse4 = ("{:.3f}%".format(100*np.sqrt(mean_squared_error(y_test2,y_predridge))))
+r2_score4 = ("{:.3f}%".format(100*r2_score(y_test2,y_predridge)))
+errors4 = abs(y_predridge - y_test2)
+acc4 = ("{:.3f}%".format(100 - np.mean(100*(errors4/y_test2))))
+
 
 colz = ['Mileage', 'EngineV']
 
 lasso_reg = Lasso(alpha = 0.1)
 lasso_reg.fit(X_train2, y_train2)
 y_predlasso = lasso_reg.predict(X_test2)
-mae5 = ("Mean Absolute Eror: {:.3f}%".format(100*mean_absolute_error(y_predlasso,y_test2)))
-mse5 = ("Mean Squared Error: {:.3f}%".format(100*mean_squared_error(y_predlasso,y_test2)))
-rmse5 = ("RMSE: {:.3f}%".format(100*np.sqrt(mean_squared_error(y_predlasso,y_test2))))
-st.write(f'The bias {lasso_reg.intercept_}')
-r2_score5 = ("R2_score: {:.3f}%".format(100*r2_score(y_test2,y_predlasso)))
+mae5 = ("{:.3f}%".format(100*mean_absolute_error(y_predlasso,y_test2)))
+mse5 = ("{:.3f}%".format(100*mean_squared_error(y_predlasso,y_test2)))
+rmse5 = ("{:.3f}%".format(100*np.sqrt(mean_squared_error(y_predlasso,y_test2))))
+r2_score5 = ("{:.3f}%".format(100*r2_score(y_test2,y_predlasso)))
 errors5 = abs(y_predlasso - y_test2)
-accuracy5 = 100 - np.mean(100*(errors5/y_test2))
-acc5 = (round(accuracy5, 2), '%.')
+acc5 = ("{:.3f}%".format(100 - np.mean(100*(errors5/y_test2))))
 
 
 elastic_net = ElasticNet(alpha=0.1, l1_ratio=0.5)
@@ -428,89 +401,74 @@ y_predict5 = elastic_net.predict(X_test2)
 mae6 = ("{:.3f}%".format(100*mean_absolute_error(y_predict5,y_test2)))
 mse6 = ("{:.3f}%".format(100*mean_squared_error(y_predict5,y_test2)))
 rmse6 = ("{:.3f}%".format(100*np.sqrt(mean_squared_error(y_predict5,y_test2))))
-st.write(f'The bias {elastic_net.intercept_}')
 r2_score6 = ("{:.3f}%".format(100*r2_score(y_test2,y_predict5)))
 errors6 = abs(y_predict5 - y_test2)
-accuracy6 = 100 - np.mean(100*(errors6/y_test2))
-acc6 = (round(accuracy6, 2), '%.')
+acc6 = ("{:.3f}%".format(100 - np.mean(100*(errors6/y_test2))))
 
 
 decisionregressor=DecisionTreeRegressor()
 decisionregressor.fit(X_train2,y_train2)
-st.write('Decision Tree')
 y_pred_dec=decisionregressor.predict(X_test2)
 score=r2_score(y_test2,y_pred_dec)
 mae7 =("{:.3f}%".format(100*mean_absolute_error(y_pred_dec,y_test2)))
 mse7 = ("{:.3f}%".format(100*mean_squared_error(y_pred_dec,y_test2)))
 rmse7 = ("{:.3f}%".format(100*np.sqrt(mean_squared_error(y_pred_dec,y_test2))))
-# st.write(f'The bias {elastic_net.intercept_}')
 r2_score7 = ("{:.3f}%".format(100*r2_score(y_test2,y_pred_dec)))
 errors7 = abs(y_pred_dec - y_test2)
-accuracy7 = 100 - np.mean(100*(errors7/y_test2))
-acc7 = (round(accuracy7, 2), '%.')
+acc7 = ("{:.3f}%".format(100 - np.mean(100*(errors7/y_test2))))
+
 
 #Instantiating with 1000 decision trees
-st.write('Random Forest')
 rf = RandomForestRegressor(n_estimators=1000, random_state = 42)
 rf.fit(X_train2, y_train2)
 predictions = rf.predict(X_test2)
 mae8 = ("{:.3f}%".format(100*mean_absolute_error(predictions,y_test2)))
 mse8 = ("{:.3f}%".format(100*mean_squared_error(predictions,y_test2)))
 rmse8 = ("{:.3f}%".format(100*np.sqrt(mean_squared_error(predictions,y_test2))))
-# st.write(f'The bias {elastic_net.intercept_}')
 r2_score8 = ("{:.3f}%".format(100*r2_score(y_test2,predictions)))
 errors8 = abs(predictions - y_test2)
-accuracy8 = 100 - np.mean(100*(errors8/y_test2))
-acc8 = (round(accuracy8, 2), '%.')
+acc8 = ("{:.3f}%".format(100 - np.mean(100*(errors8/y_test2))))
+
 
 errors = abs(predictions - y_test2)
-st.write('Mean Absolute Error:', round(np.mean(errors), 2), 'degrees.')
 accuracy = 100 - np.mean(100*(errors/y_test2))
-st.write('Accuracy:', round(accuracy, 2), '%.')
 importances = list(rf.feature_importances_)
 
-feature_list = colz
-#List of tuples with variable and importance
-feature_importances = [(feature, round(importance, 2)) for feature, importance in zip(feature_list, importances)]
-#Sorting the feature importances by most important first
-feature_importances = sorted(feature_importances, key = lambda x: x[1], reverse = True)
-#Print out the feature and importances
-[st.write('Variable: {:20} Importance:{}'.format(*pair)) for pair in feature_importances]
-
-data1 = [mae, mae2, mae3, mae4, mae5, mae6, mae7, mae8]
-data2 = [mse, mse2, mse3, mse4, mse5, mse6, mse7, mae8]
-data3 = [rmse, rmse2, rmse3, rmse4, rmse5, rmse6, rmse7, rmse8]
-data4 = [r2_score,r2_score1, r2_score2, r2_score3,r2_score4, r2_score5, r2_score6,r2_score7, r2_score8]
-data5 = [acc, acc2, acc3, acc4, acc5,acc6, acc7, acc8]
+data1 = [mae, mae3, mae4, mae5, mae6, mae7, mae8]
+data2 = [mse, mse3, mse4, mse5, mse6, mse7, mae8]
+data3 = [rmse, rmse3, rmse4, rmse5, rmse6, rmse7, rmse8]
+data4 = [r2_score1, r2_score3,r2_score4, r2_score5, r2_score6,r2_score7, r2_score8]
+data5 = [acc, acc3, acc4, acc5,acc6, acc7, acc8]
 
 
-index = ['linear_regression','SDG_regression','Polynomial_Regression','Ridge_regression','Lasso_regression','ElasticNet_regression', 'Decision Tree', 'Random Forest]
-errord = pd.DataFrame({'absol_error':data1, 'sqrd_error':data2, 'root_mean_sq_error':data3, 'r2_score':data4, 'accuracy':data5},index = index)
-errord.sort_values(by=['accuracy'])
+index = ['linear_regression','Polynomial_Regression','Ridge_regression','Lasso_regression','ElasticNet_regression', 'Decision Tree', 'Random Forest']
+errord = pd.DataFrame({'absol_error':data1, 'sqrd_error':data2, 'root_mean_sq_error':data3, 'R2score':data4, 'accuracy':data5},index = index)
+
 st.write(errord)
 
+st.write('The Random Forest algorithm performed best and I hence chose it. To conclude, for all the variables, only the Mileage and Engine Volume have significant weight in the prediction of car price. ')
 
 # create a summary table of the features and their weights
-reg_summary = pd.DataFrame(data=colz, columns=['Features'])
-reg_summary['Weights'] = model_linear2.coef_
-# with row
-df_pf = pd.DataFrame(data=np.exp(y_pred2), columns=['Prediction'])
+# reg_summary = pd.DataFrame(data=colz, columns=['Features'])
+# reg_summary['Weights'] = model_linear2.coef_
+# # with row
+# df_pf = pd.DataFrame(data=np.exp(y_pred2), columns=['Prediction'])
 
-df_pf['Target'] = np.exp(y_test2)
+# df_pf['Target'] = np.exp(y_test2)
 
-# Create a column for the residuals
-df_pf['Residual'] = df_pf['Target'] - df_pf['Prediction']
-#Create a column for the absolute residual percentage
-df_pf['Residual%'] = np.absolute(df_pf['Residual'])/df_pf['Target']*100
-df_pf.head()
+# # Create a column for the residuals
+# df_pf['Residual'] = df_pf['Target'] - df_pf['Prediction']
+# #Create a column for the absolute residual percentage
+# df_pf['Residual%'] = np.absolute(df_pf['Residual'])/df_pf['Target']*100
+# df_pf.head()
 
-df_pf.sort_values(by=['Residual%'])
-# sorting df_pf by difference in percentages using the sort values method 
+# df_pf.sort_values(by=['Residual%'])
+# # sorting df_pf by difference in percentages using the sort values method 
 
-row9_1, row9_2 = st.beta_columns((1,1))
-with row9_1, _lock:
-    st.subheader('A summary table of the features and their weights')
-    reg_summary
-with row9_2, _lock:
-    st.subheader('A summary table of the predictions and residuals(absolute differences)')
-    df_pf
+# row9_1, row9_2 = st.beta_columns((1,1))
+# with row9_1, _lock:
+#     st.subheader('A summary table of the features and their weights')
+#     reg_summary
+# with row9_2, _lock:
+#     st.subheader('A summary table of the predictions and residuals(absolute differences)')
+#     df_pf

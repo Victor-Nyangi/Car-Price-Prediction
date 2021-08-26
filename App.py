@@ -64,7 +64,7 @@ st.write(df.describe(include='all'))
 #df['EngineV'].fillna(value=df['EngineV'].interpolate(method='linear'),inplace=True)
 #inplace makes the changes permanent..
 #median is not affected by outliers...mean can be affected
-#using interpolate...regression method
+#using interpolate...regression metho
 
 # Create a new variable that is made up of the dataframe wihtout the rows with missing values
 # data_nomv = data.dropna(axis=0)
